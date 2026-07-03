@@ -325,6 +325,48 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(720deg); }
   }
+
+  /* ---- Hint popup ---- */
+  .hint-pop {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    animation: hintPop 2.4s ease forwards;
+  }
+
+  .hint-pop img {
+    width: min(58vw, 240px);
+    height: min(58vw, 240px);
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  }
+
+  .hint-pop .hint-caption {
+    background: var(--red);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 7px 16px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+
+  @keyframes hintPop {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    12%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    18%  { transform: translate(-50%, -50%) scale(1); }
+    70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  }
 </style>
 </head>
 <body>
@@ -466,6 +508,7 @@
   function commit(value) {
     if (activeIndex === null) return;
     const v = value.trim();
+    const wasEmpty = !state.answers[activeIndex];
     if (v) state.answers[activeIndex] = v;
     else delete state.answers[activeIndex];
     save();
@@ -475,11 +518,41 @@
       state.celebrated = true;
       save();
       celebrate();
+    } else if (v && wasEmpty) {
+      showHint();
     }
     if (filled < 16 && state.celebrated) {
       state.celebrated = false;
       save();
     }
+  }
+
+  // ---- Hint photos: Canadians at the party worth talking to ----
+  const HINT_COUNT = 9;
+  const hintImages = [];
+  for (let i = 1; i <= HINT_COUNT; i++) {
+    const img = new Image();
+    img.src = "hints/hint" + i + ".jpg";
+    hintImages.push(img);
+  }
+  let lastHint = -1;
+
+  function showHint() {
+    let idx;
+    do { idx = Math.floor(Math.random() * HINT_COUNT); } while (idx === lastHint);
+    lastHint = idx;
+    const pop = document.createElement("div");
+    pop.className = "hint-pop";
+    const img = document.createElement("img");
+    img.src = hintImages[idx].src;
+    img.alt = "Hint: a Canadian at the party";
+    const cap = document.createElement("div");
+    cap.className = "hint-caption";
+    cap.textContent = "Psst… this Canadian is here 👀🍁";
+    pop.appendChild(img);
+    pop.appendChild(cap);
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 2500);
   }
 
   document.getElementById("btnSave").addEventListener("click", () => commit(sheetInput.value));

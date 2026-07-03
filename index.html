@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#d52b1e">
+<title>🍁 Canada Day Human Bingo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --red: #d52b1e;
+    --red-dark: #a81f14;
+    --cream: #fff8f5;
+    --ink: #2b1a17;
+  }
+
+  html { height: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%;
+    background: var(--red);
+    color: #fff;
+    text-align: center;
+    padding: 16px 12px 14px;
+    box-shadow: 0 2px 8px rgba(168, 31, 20, 0.35);
+  }
+
+  header h1 {
+    font-size: 1.35rem;
+    letter-spacing: 0.3px;
+  }
+
+  header p {
+    font-size: 0.8rem;
+    opacity: 0.92;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  .prize {
+    display: inline-block;
+    margin-top: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+  }
+
+  main {
+    width: 100%;
+    max-width: 560px;
+    padding: 14px 12px 40px;
+  }
+
+  .player-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .player-row input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #e8c9c4;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .player-row input:focus {
+    outline: none;
+    border-color: var(--red);
+  }
+
+  .progress-wrap {
+    margin-bottom: 12px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--red-dark);
+  }
+
+  .progress-bar {
+    height: 10px;
+    background: #f0dcd8;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--red), #f0483a);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+  }
+
+  .square {
+    aspect-ratio: 1;
+    background: #fff;
+    border: 2px solid #e8c9c4;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5px 4px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+  }
+
+  .square:active { transform: scale(0.95); }
+
+  .square .emoji { font-size: 1.15rem; line-height: 1.2; }
+
+  .square .label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 3px;
+    color: var(--ink);
+  }
+
+  .square .name {
+    display: none;
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #fff;
+    background: rgba(0,0,0,0.18);
+    border-radius: 6px;
+    padding: 2px 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .square.filled {
+    background: var(--red);
+    border-color: var(--red-dark);
+    box-shadow: 0 3px 10px rgba(213, 43, 30, 0.35);
+  }
+
+  .square.filled .label { color: #ffe0dc; }
+  .square.filled .name { display: block; }
+
+  .square.free {
+    background: repeating-linear-gradient(45deg, var(--red), var(--red) 12px, #c62717 12px, #c62717 24px);
+    border-color: var(--red-dark);
+    cursor: default;
+  }
+
+  .square.free .label { color: #fff; font-size: 0.6rem; }
+  .square.free .emoji { font-size: 1.5rem; }
+
+  .hint {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #9c6b63;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .reset-btn {
+    display: block;
+    margin: 18px auto 0;
+    background: none;
+    border: 1.5px solid #d9aca4;
+    color: #9c6b63;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  /* ---- Bottom sheet ---- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(43, 26, 23, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(105%);
+    transition: transform 0.25s ease;
+    z-index: 11;
+    max-width: 560px;
+    margin: 0 auto;
+    box-shadow: 0 -6px 30px rgba(0,0,0,0.2);
+  }
+
+  .sheet.open { transform: translateY(0); }
+
+  .sheet .q-emoji { font-size: 2rem; text-align: center; }
+
+  .sheet h2 {
+    font-size: 1.05rem;
+    text-align: center;
+    margin: 8px 0 4px;
+    line-height: 1.4;
+  }
+
+  .sheet .q-sub {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9c6b63;
+    margin-bottom: 14px;
+  }
+
+  .sheet input {
+    width: 100%;
+    padding: 13px 14px;
+    font-size: 1.05rem;
+    border: 2px solid #e8c9c4;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .sheet input:focus { outline: none; border-color: var(--red); }
+
+  .sheet-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .sheet-btns button {
+    flex: 1;
+    padding: 13px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-save { background: var(--red); color: #fff; }
+  .btn-save:active { background: var(--red-dark); }
+  .btn-clear { background: #f3e3e0; color: #9c6b63; flex: 0 0 auto; padding: 13px 16px !important; }
+  .btn-cancel { background: #f3e3e0; color: var(--ink); flex: 0 0 auto; padding: 13px 16px !important; }
+
+  /* ---- Winner banner ---- */
+  .winner {
+    position: fixed;
+    inset: 0;
+    background: rgba(213, 43, 30, 0.96);
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    padding: 24px;
+  }
+
+  .winner.show { display: flex; }
+  .winner .big { font-size: 4rem; }
+  .winner h2 { font-size: 2rem; margin: 10px 0 8px; }
+  .winner p { font-size: 1.05rem; line-height: 1.6; max-width: 320px; }
+
+  .winner button {
+    margin-top: 24px;
+    background: #fff;
+    color: var(--red);
+    border: none;
+    border-radius: 999px;
+    padding: 13px 28px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .leaf {
+    position: fixed;
+    top: -40px;
+    z-index: 21;
+    font-size: 1.6rem;
+    animation: fall linear forwards;
+    pointer-events: none;
+  }
+
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍁 Canada Day Human Bingo 🍁</h1>
+  <p>Find someone at the party who matches each square<br>and write their name in it. Fill all 16 to win!</p>
+  <div class="prize">🏆 First 2 finishers win a Blue Jays / Raptors hat!</div>
+</header>
+
+<main>
+  <div class="player-row">
+    <input id="playerName" type="text" placeholder="Your name" autocomplete="off">
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progress</span>
+      <span id="progressText">1 / 16</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <p class="hint">Tap a square, then type the name of the person who matches it.<br>One person can only be used for <b>two squares max</b> — go meet people! 😄<br>Your card saves automatically on this phone.</p>
+
+  <button class="reset-btn" id="resetBtn">Start over</button>
+</main>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sheet" id="sheet">
+  <div class="q-emoji" id="sheetEmoji"></div>
+  <h2 id="sheetQuestion"></h2>
+  <div class="q-sub">Who did you find?</div>
+  <input id="sheetInput" type="text" placeholder="Their name" autocomplete="off" enterkeyhint="done">
+  <div class="sheet-btns">
+    <button class="btn-cancel" id="btnCancel">Cancel</button>
+    <button class="btn-clear" id="btnClear">Clear</button>
+    <button class="btn-save" id="btnSave">Save</button>
+  </div>
+</div>
+
+<div class="winner" id="winner">
+  <div class="big">🇨🇦</div>
+  <h2>BINGO!</h2>
+  <p><b id="winnerName"></b>You filled the whole card!<br><br>Now go show your card to the judges in person to claim your spot — first 2 finishers get a hat! 🧢</p>
+  <button id="winnerClose">Back to my card</button>
+</div>
+
+<script>
+  const QUESTIONS = [
+    { emoji: "🎓", short: "Went to U of T", full: "Went to the University of Toronto" },
+    { emoji: "🎓", short: "Went to U of A", full: "Went to the University of Alberta" },
+    { emoji: "🏙️", short: "Lived in Edmonton", full: "Lived in Edmonton" },
+    { emoji: "🗺️", short: "Visited 4+ provinces", full: "Visited at least 4 Canadian provinces" },
+    { emoji: "🫎", short: "Seen a moose", full: "Seen a moose" },
+    { emoji: "🍁", short: "FREE SPACE — Happy Canada Day!", full: "FREE SPACE", free: true },
+    { emoji: "🥶", short: "Survived −20°C weather", full: "Experienced −20°C (−4°F) or colder weather" },
+    { emoji: "🥌", short: "Knows how to curl", full: "Knows how to curl" },
+    { emoji: "🏒", short: "Watched live hockey", full: "Watched a hockey game live" },
+    { emoji: "🩳", short: "Shorts in freezing weather", full: "Worn shorts in below-freezing weather" },
+    { emoji: "🏔️", short: "Been to Banff", full: "Been to Banff" },
+    { emoji: "❤️", short: "Dated a Canadian", full: "Dated a Canadian" },
+    { emoji: "☕", short: "Been to Tim Hortons", full: "Been to Tim Hortons" },
+    { emoji: "🏃", short: "Terry Fox Run at school", full: "Participated in a Terry Fox Run at school" },
+    { emoji: "🗣️", short: "Can name all 10 provinces", full: "Can name all 10 Canadian provinces" },
+    { emoji: "🎿", short: "Skied or snowboarded", full: "Has skied or snowboarded" },
+  ];
+
+  const STORAGE_KEY = "canadaDayBingo.v1";
+
+  let state = { player: "", answers: {}, celebrated: false };
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && typeof saved === "object") state = Object.assign(state, saved);
+  } catch (e) { /* corrupted state — start fresh */ }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  const grid = document.getElementById("grid");
+  const overlay = document.getElementById("overlay");
+  const sheet = document.getElementById("sheet");
+  const sheetEmoji = document.getElementById("sheetEmoji");
+  const sheetQuestion = document.getElementById("sheetQuestion");
+  const sheetInput = document.getElementById("sheetInput");
+  const playerInput = document.getElementById("playerName");
+  const winner = document.getElementById("winner");
+  let activeIndex = null;
+
+  // Build the grid
+  QUESTIONS.forEach((q, i) => {
+    const sq = document.createElement("div");
+    sq.className = "square" + (q.free ? " free" : "");
+    sq.innerHTML =
+      '<div class="emoji">' + q.emoji + '</div>' +
+      '<div class="label">' + q.short + '</div>' +
+      '<div class="name"></div>';
+    if (!q.free) sq.addEventListener("click", () => openSheet(i));
+    grid.appendChild(sq);
+  });
+
+  const squares = grid.children;
+
+  function render() {
+    let filled = 1; // free space
+    QUESTIONS.forEach((q, i) => {
+      if (q.free) return;
+      const name = state.answers[i] || "";
+      squares[i].classList.toggle("filled", !!name);
+      squares[i].querySelector(".name").textContent = name;
+      if (name) filled++;
+    });
+    document.getElementById("progressText").textContent = filled + " / 16";
+    document.getElementById("progressFill").style.width = (filled / 16 * 100) + "%";
+    return filled;
+  }
+
+  function openSheet(i) {
+    activeIndex = i;
+    sheetEmoji.textContent = QUESTIONS[i].emoji;
+    sheetQuestion.textContent = QUESTIONS[i].full;
+    sheetInput.value = state.answers[i] || "";
+    overlay.classList.add("open");
+    sheet.classList.add("open");
+    setTimeout(() => sheetInput.focus(), 250);
+  }
+
+  function closeSheet() {
+    overlay.classList.remove("open");
+    sheet.classList.remove("open");
+    sheetInput.blur();
+    activeIndex = null;
+  }
+
+  function commit(value) {
+    if (activeIndex === null) return;
+    const v = value.trim();
+    if (v) state.answers[activeIndex] = v;
+    else delete state.answers[activeIndex];
+    save();
+    closeSheet();
+    const filled = render();
+    if (filled === 16 && !state.celebrated) {
+      state.celebrated = true;
+      save();
+      celebrate();
+    }
+    if (filled < 16 && state.celebrated) {
+      state.celebrated = false;
+      save();
+    }
+  }
+
+  document.getElementById("btnSave").addEventListener("click", () => commit(sheetInput.value));
+  document.getElementById("btnClear").addEventListener("click", () => commit(""));
+  document.getElementById("btnCancel").addEventListener("click", closeSheet);
+  overlay.addEventListener("click", closeSheet);
+  sheetInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") commit(sheetInput.value);
+  });
+
+  playerInput.value = state.player;
+  playerInput.addEventListener("input", () => {
+    state.player = playerInput.value;
+    save();
+  });
+
+  function celebrate() {
+    document.getElementById("winnerName").textContent =
+      state.player ? "Way to go, " + state.player + "! " : "";
+    winner.classList.add("show");
+    for (let i = 0; i < 40; i++) {
+      const leaf = document.createElement("div");
+      leaf.className = "leaf";
+      leaf.textContent = "🍁";
+      leaf.style.left = Math.random() * 100 + "vw";
+      leaf.style.animationDuration = (2.5 + Math.random() * 3) + "s";
+      leaf.style.animationDelay = Math.random() * 2 + "s";
+      leaf.style.fontSize = (1 + Math.random() * 1.4) + "rem";
+      document.body.appendChild(leaf);
+      setTimeout(() => leaf.remove(), 8000);
+    }
+  }
+
+  document.getElementById("winnerClose").addEventListener("click", () => {
+    winner.classList.remove("show");
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (!confirm("Erase your whole card and start over?")) return;
+    state = { player: state.player, answers: {}, celebrated: false };
+    save();
+    render();
+  });
+
+  render();
+  // If they reload an already-complete card, don't re-trigger the celebration.
+</script>
+
+</body>
+</html>
